@@ -70,8 +70,7 @@ workspace {
                         containerInstance webAppContainer
                         containerInstance api
                         containerInstance api
-                        containerInstance primaryDb
-                        containerInstance replicaDb
+                      
                         containerInstance queue
                     }
                    deploymentNode "Integration Pods" {
@@ -81,14 +80,20 @@ workspace {
                         containerInstance apiAdaptersTwo
                         containerInstance apiAdaptersThree
                    }
-                     deploymentNode "socialMedia Pods" {
+                deploymentNode "socialMedia Pods" {
                         description "Kubernetes social Media node"
                         technology "Kubernetes Worker"
                         containerInstance socialMediaService
                    }  
                 }
             }
+              deploymentNode  "VM" {
+                 description "VM Backend node"
+                containerInstance primaryDb
+                containerInstance replicaDb
             }
+            }
+          
         }
     }
 
