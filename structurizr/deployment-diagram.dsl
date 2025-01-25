@@ -8,24 +8,35 @@ workspace {
         webApp = softwareSystem "Web Application" {
             description "The web application for managing trips"
             webAppContainer = container "Web Application" "" "Delivers the static content and spa"
-            api = container "API" "" "Laravel"
+            api = container "DashbordService" "" "Golang"
+            adminService = container "Admin API" "" "Golang"
+            adminWebApp = container "Admin Web" "" "Vue"
             primaryDb = container "Primary Database" "" "PostgreSQL"
             replicaDb = container "Replica Database" "" "PostgreSQL"
-            nginx = container "NGINX" "" "NGINX"
+            nginx = container "Api GateWay" "" "NGINX"
             spa = container "Single-Page Application" "" "Vue"
             pwa = container "Progressiv web application" "" "Vue"
             redis = container "Cash web application" "" "redis"
-            queue = container "Event Queqy" "" "Kafka"
+            queue = container "Broker" "" "Kafka"
             apiAdaptersOne = container "Integrations Container One"
-            apiAdaptersTwo = container "Integrations Container Two"
+            apiAdaptersTwo = container "Integrations Container Two"  
             apiAdaptersThree = container "Integrations Container Three"
             thirdpPartySystems = container " abstract thirdp Party Systems "
-            socialMediaService = container "social Media  integration service Service"
+            socialMediaService = container "social Media  integration service  "
+            authService = container "jwt auth service"
+            
         }
 
         user -> webAppContainer "Uses"
-        api -> primaryDb "Writes to"
-        api -> replicaDb "Reads from"
+        api -> primaryDb "Writes to" 
+        replicaDb -> api  "Reads from" 
+        
+        adminWebApp -> nginx "Make api calls" "json/https"
+        api -> adminService "Writes to" 
+        replicaDb -> adminService  "Reads from" 
+        nginx -> adminService "translate to api" "json/https"
+        
+        
         primaryDb -> replicaDb "Replicates data to"
         nginx -> NGINX "Forwards requests to"
         webAppContainer -> SPA "Delivers to the customers web browser"
@@ -34,26 +45,31 @@ workspace {
         nginx -> api "translate to api" "json/https"
         api -> redis "cash" "json"
         redis -> api "cash" "json"
-        api -> queue '' 'json'
-        queue -> api '' 'json'
-        queue -> apiAdaptersOne '' 'json'
-        queue -> apiAdaptersTwo '' 'json'
-        queue -> apiAdaptersThree '' 'json'
-        socialMediaService -> api '' 'json'
-        api -> socialMediaService '' 'json'
-        apiAdaptersThree -> thirdpPartySystems 'service data' 'json/xml/grpc?'
-        apiAdaptersTwo -> thirdpPartySystems 'service data' 'json/xml/grpc?'
-        apiAdaptersOne -> thirdpPartySystems 'service data' 'json/xml/grpc?'
+        api -> queue "" "json"
+        queue -> api "" "json"
+        queue -> apiAdaptersOne "" "json"
+        queue -> apiAdaptersTwo "" "json"
+        queue -> apiAdaptersThree "" "json"
+        socialMediaService -> api "" "json"
+        api -> socialMediaService "" "json"
+        apiAdaptersThree -> thirdpPartySystems "service data" "json/xml/grpc?"
+        apiAdaptersTwo -> thirdpPartySystems "service data" "json/xml/grpc?"
+        apiAdaptersOne -> thirdpPartySystems "service data" "json/xml/grpc?"
+        authService -> nginx "auth data" "json"
+        nginx -> authService "token" " json"
         
+        
+         
         production = deploymentEnvironment "Production" {
             deploymentNode "Internet"{
             containerInstance spa
             containerInstance pwa
             containerInstance thirdpPartySystems
+            containerInstance adminWebApp
             deploymentNode "Kubernetes Cluster" {
                 description "Kubernetes cluster for deploying containers"
                 technology "Kubernetes"
-
+                
                 deploymentNode "Master Node" {
                     description "Kubernetes master node"
                     technology "Kubernetes Master"
@@ -69,9 +85,9 @@ workspace {
                         containerInstance nginx
                         containerInstance webAppContainer
                         containerInstance api
-                        containerInstance api
-                      
+                        containerInstance authService
                         containerInstance queue
+                        containerInstance adminService 
                     }
                    deploymentNode "Integration Pods" {
                         description "Kubernetes Integration node"
